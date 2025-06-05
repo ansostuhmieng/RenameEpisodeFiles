@@ -1,0 +1,195 @@
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+
+namespace RenameEpisodeFiles
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void btnRename_Click(object sender, EventArgs e)
+        {
+
+            #region basic validation
+            lblErr.Text = "";
+
+            string folderPath = txtFolderPath.Text;
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                lblErr.Text = "Fix folder path";
+                return;
+            }
+
+            if (!int.TryParse(txtFirstEpisode.Text, out int episodeNumber))
+            {
+                lblErr.Text = "Fix episode number";
+                return;
+            }
+
+            if (!int.TryParse(txtSeasonNumber.Text, out int seasonNumber))
+            {
+                lblErr.Text = "Fix season number";
+                return;
+            }
+
+            string dataPath = txtEpisodeData.Text;
+            if (string.IsNullOrEmpty(dataPath))
+            {
+                lblErr.Text = "Fix data path";
+                return;
+            }
+
+            string showName = txtShowName.Text;
+            if (string.IsNullOrEmpty(showName))
+            {
+                lblErr.Text = "Fix show Name";
+                return;
+            }
+            #endregion
+
+            int lastEpisode = FileRenamer.RenameEpisodes(folderPath, showName, seasonNumber, episodeNumber, dataPath);
+
+            // copy the files over to the destination after the rename
+            // but only if the field is populated
+            if (!string.IsNullOrEmpty(txtCopyFilesTo.Text))
+            {
+                string destinationDirectory = txtCopyFilesTo.Text;
+                string sourceDirectory = txtFolderPath.Text;
+
+                Directory.CreateDirectory(destinationDirectory); // Ensure destination exists
+
+                foreach (var filePath in Directory.GetFiles(sourceDirectory))
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    string destPath = Path.Combine(destinationDirectory, fileName);
+                    File.Copy(filePath, destPath, overwrite: true);
+                }
+            }
+
+            // update the episode number so next path can be run easier
+            txtFirstEpisode.Text = (lastEpisode + 1).ToString();
+            txtFolderPath.Text = "";
+
+        }
+
+        private void btnCleanEpisodeData_Click(object sender, EventArgs e)
+        {
+            string dataPath = txtEpisodeData.Text;
+            if (string.IsNullOrEmpty(dataPath))
+            {
+                lblErr.Text = "Fix data path";
+                return;
+            }
+
+            string newPath = FileRenamer.ExtractAndWriteEpisodeNames(dataPath);
+
+            txtEpisodeData.Text = newPath;
+        }
+
+        private void btnFindFolder_Click(object sender, EventArgs e)
+        {
+            // Show the dialog and get result.
+            DialogResult result = folderBrowserDialog1.ShowDialog();
+            if (result == DialogResult.OK) // Test result.
+            {
+                txtFolderPath.Text = folderBrowserDialog1.SelectedPath;
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Show the dialog and get result.
+            DialogResult result = openFileDialog1.ShowDialog();
+            if (result == DialogResult.OK) // Test result.
+            {
+                txtEpisodeData.Text = openFileDialog1.FileName;
+            }
+        }
+
+        private void txtEpisodeData_DragDrop(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Copy;
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                foreach (string filePath in files)
+                {
+                    txtEpisodeData.Text = filePath;
+                }
+            }
+        }
+
+        private void txtEpisodeData_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void txtFolderPath_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (paths.Length > 0)
+                {
+                    txtFolderPath.Text = paths[0]; // This could be a file or a folder path
+                }
+            }
+        }
+
+        private void txtFolderPath_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            // Show the dialog and get result.
+            DialogResult result = folderBrowserDialog1.ShowDialog();
+            if (result == DialogResult.OK) // Test result.
+            {
+                txtCopyFilesTo.Text = folderBrowserDialog1.SelectedPath;
+            }
+        }
+
+        private void txtCopyFilesTo_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void txtCopyFilesTo_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (paths.Length > 0)
+                {
+                    txtCopyFilesTo.Text = paths[0]; // This could be a file or a folder path
+                }
+            }
+        }
+    }
+}
