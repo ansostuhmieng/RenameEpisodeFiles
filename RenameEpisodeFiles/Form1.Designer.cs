@@ -48,6 +48,10 @@
             txtCopyFilesTo = new TextBox();
             label6 = new Label();
             button1 = new Button();
+            ModeGroup = new GroupBox();
+            radioModeDefault = new RadioButton();
+            radioModeAI = new RadioButton();
+            ModeGroup.SuspendLayout();
             SuspendLayout();
             // 
             // folderBrowserDialog1
@@ -223,12 +227,45 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click_1;
             // 
+            // ModeGroup
+            // 
+            ModeGroup.Controls.Add(radioModeAI);
+            ModeGroup.Controls.Add(radioModeDefault);
+            ModeGroup.Location = new Point(359, 41);
+            ModeGroup.Name = "ModeGroup";
+            ModeGroup.Size = new Size(315, 75);
+            ModeGroup.TabIndex = 17;
+            ModeGroup.TabStop = false;
+            // 
+            // radioModeDefault
+            // 
+            radioModeDefault.AutoSize = true;
+            radioModeDefault.Checked = true;
+            radioModeDefault.Location = new Point(15, 11);
+            radioModeDefault.Name = "radioModeDefault";
+            radioModeDefault.Size = new Size(146, 29);
+            radioModeDefault.TabIndex = 0;
+            radioModeDefault.TabStop = true;
+            radioModeDefault.Text = "Default Mode";
+            radioModeDefault.UseVisualStyleBackColor = true;
+            // 
+            // radioModeAI
+            // 
+            radioModeAI.AutoSize = true;
+            radioModeAI.Location = new Point(15, 46);
+            radioModeAI.Name = "radioModeAI";
+            radioModeAI.Size = new Size(106, 29);
+            radioModeAI.TabIndex = 1;
+            radioModeAI.Text = "AI Mode";
+            radioModeAI.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(ModeGroup);
             Controls.Add(button1);
             Controls.Add(label6);
             Controls.Add(txtCopyFilesTo);
@@ -249,6 +286,8 @@
             Controls.Add(label1);
             Name = "Form1";
             Text = "Rename Episodes";
+            ModeGroup.ResumeLayout(false);
+            ModeGroup.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -275,5 +314,8 @@
         private TextBox txtCopyFilesTo;
         private Label label6;
         private Button button1;
+        private GroupBox ModeGroup;
+        private RadioButton radioModeDefault;
+        private RadioButton radioModeAI;
     }
 }
