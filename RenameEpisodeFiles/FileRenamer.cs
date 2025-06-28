@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OpenAI.Net;
 
 namespace RenameEpisodeFiles
 {
@@ -43,6 +44,30 @@ namespace RenameEpisodeFiles
             }
 
             return lastEpisode;
+        }
+
+        public static async void RenameEpisodesWithAI(string folderPath, string showName)
+        {
+            // Get all files in the directory
+            var files = new DirectoryInfo(folderPath)
+                .GetFiles()
+                .OrderBy(f => f.CreationTime)
+                .ToList();
+
+            // Convert to a list of file names as newline -separated strings
+            var fileNames = files.Select(f => f.Name).ToList();
+
+            // Convert the list to a single string with each filename on a new line
+            string fileNamesString = string.Join(Environment.NewLine, fileNames);
+
+            // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
+            var openAIService = Program.OpenAIService;
+            var response = await openAIService.Chat.Get($"Extract episode names from the following file names:\n{fileNamesString}\n\nPlease provide the episode names in the format 'SxxExx - Episode Name'.", (options) =>
+            {
+                options.Model = "gpt-3.5-turbo";
+                options.MaxTokens = 1000;
+                options.Temperature = 0.7;
+            });
         }
 
 

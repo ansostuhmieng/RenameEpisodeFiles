@@ -1,13 +1,36 @@
+using System.Configuration;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenAI.Net;
+
 namespace RenameEpisodeFiles
 {
     internal static class Program
     {
+        public static IConfiguration Configuration { get; private set; }
+        public static IOpenAIService OpenAIService { get; private set; }
+
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
+            // Build configuration to load secrets.json from the application directory
+            Configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("secrets.json", optional: false, reloadOnChange: true)
+                .Build();
+
+            // Configure OpenAI service
+            var services = new ServiceCollection();
+            services.AddOpenAIServices(options =>
+            {
+                options.ApiKey = Configuration["OpenAI:ApiKey"];
+            });
+            var provider = services.BuildServiceProvider();
+            OpenAIService = provider.GetRequiredService<IOpenAIService>();
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
