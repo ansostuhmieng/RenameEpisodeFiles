@@ -20,11 +20,11 @@ namespace RenameEpisodeFiles
             Directory.CreateDirectory(HistoryFolder);
             var timestamp = DateTime.Now.ToString("yyyyMMddTHHmmss");
             var historyFile = Path.Combine(HistoryFolder, $"rename_history_{timestamp}.json");
-            
+
             var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
             var jsonString = JsonSerializer.Serialize(renameHistory, jsonOptions);
             File.WriteAllText(historyFile, jsonString);
-            
+
             Program.Logger.LogInformation($"Rename history saved to: {historyFile}");
         }
 
@@ -36,7 +36,7 @@ namespace RenameEpisodeFiles
             string episodeNamesFile)
         {
             var renameHistory = new List<FileRenameRecord>();
-            
+
             // Read episode names from file
             var episodeNames = File.ReadAllLines(episodeNamesFile)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
@@ -137,7 +137,7 @@ namespace RenameEpisodeFiles
                 var file = files[i];
                 string newFileName = SanitizeFileName(newFileNames[i]);
                 string newFilePath = Path.Combine(folderPath, newFileName);
-                
+
                 // Check if the new file name is different before renaming
                 if (FileDoesNotExist(file.FullName, newFilePath))
                 {
