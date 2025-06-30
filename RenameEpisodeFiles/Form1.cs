@@ -5,6 +5,14 @@ namespace RenameEpisodeFiles
 {
     public partial class Form1 : Form
     {
+        private enum RenameMode
+        {
+            Default,
+            AI
+        }
+
+        private RenameMode _renameMode = RenameMode.Default;
+
         public Form1()
         {
             InitializeComponent();
@@ -13,65 +21,86 @@ namespace RenameEpisodeFiles
         private void btnRename_Click(object sender, EventArgs e)
         {
 
-            #region basic validation
-            lblErr.Text = "";
-
-            string folderPath = txtFolderPath.Text;
-            if (string.IsNullOrEmpty(folderPath))
+            if (_renameMode == RenameMode.Default)
             {
-                lblErr.Text = "Fix folder path";
-                return;
-            }
+                #region basic validation
+                lblErr.Text = "";
 
-            if (!int.TryParse(txtFirstEpisode.Text, out int episodeNumber))
-            {
-                lblErr.Text = "Fix episode number";
-                return;
-            }
-
-            if (!int.TryParse(txtSeasonNumber.Text, out int seasonNumber))
-            {
-                lblErr.Text = "Fix season number";
-                return;
-            }
-
-            string dataPath = txtEpisodeData.Text;
-            if (string.IsNullOrEmpty(dataPath))
-            {
-                lblErr.Text = "Fix data path";
-                return;
-            }
-
-            string showName = txtShowName.Text;
-            if (string.IsNullOrEmpty(showName))
-            {
-                lblErr.Text = "Fix show Name";
-                return;
-            }
-            #endregion
-
-            int lastEpisode = FileRenamer.RenameEpisodes(folderPath, showName, seasonNumber, episodeNumber, dataPath);
-
-            // copy the files over to the destination after the rename
-            // but only if the field is populated
-            if (!string.IsNullOrEmpty(txtCopyFilesTo.Text))
-            {
-                string destinationDirectory = txtCopyFilesTo.Text;
-                string sourceDirectory = txtFolderPath.Text;
-
-                Directory.CreateDirectory(destinationDirectory); // Ensure destination exists
-
-                foreach (var filePath in Directory.GetFiles(sourceDirectory))
+                string folderPath = txtFolderPath.Text;
+                if (string.IsNullOrEmpty(folderPath))
                 {
-                    string fileName = Path.GetFileName(filePath);
-                    string destPath = Path.Combine(destinationDirectory, fileName);
-                    File.Copy(filePath, destPath, overwrite: true);
+                    lblErr.Text = "Fix folder path";
+                    return;
                 }
-            }
 
-            // update the episode number so next path can be run easier
-            txtFirstEpisode.Text = (lastEpisode + 1).ToString();
-            txtFolderPath.Text = "";
+                if (!int.TryParse(txtFirstEpisode.Text, out int episodeNumber))
+                {
+                    lblErr.Text = "Fix episode number";
+                    return;
+                }
+
+                if (!int.TryParse(txtSeasonNumber.Text, out int seasonNumber))
+                {
+                    lblErr.Text = "Fix season number";
+                    return;
+                }
+
+                string dataPath = txtEpisodeData.Text;
+                if (string.IsNullOrEmpty(dataPath))
+                {
+                    lblErr.Text = "Fix data path";
+                    return;
+                }
+
+                string showName = txtShowName.Text;
+                if (string.IsNullOrEmpty(showName))
+                {
+                    lblErr.Text = "Fix show Name";
+                    return;
+                }
+                #endregion
+
+                int lastEpisode = FileRenamer.RenameEpisodes(folderPath, showName, seasonNumber, episodeNumber, dataPath);
+
+                // copy the files over to the destination after the rename
+                // but only if the field is populated
+                if (!string.IsNullOrEmpty(txtCopyFilesTo.Text))
+                {
+                    string destinationDirectory = txtCopyFilesTo.Text;
+                    string sourceDirectory = txtFolderPath.Text;
+
+                    Directory.CreateDirectory(destinationDirectory); // Ensure destination exists
+
+                    foreach (var filePath in Directory.GetFiles(sourceDirectory))
+                    {
+                        string fileName = Path.GetFileName(filePath);
+                        string destPath = Path.Combine(destinationDirectory, fileName);
+                        File.Copy(filePath, destPath, overwrite: true);
+                    }
+                }
+
+                // update the episode number so next path can be run easier
+                txtFirstEpisode.Text = (lastEpisode + 1).ToString();
+                txtFolderPath.Text = ""; 
+            }
+            else if (_renameMode == RenameMode.AI)
+            {
+                lblErr.Text = "";
+                string folderPath = txtFolderPath.Text;
+                if (string.IsNullOrEmpty(folderPath))
+                {
+                    lblErr.Text = "Fix folder path";
+                    return;
+                }
+                string showName = txtShowName.Text;
+                if (string.IsNullOrEmpty(showName))
+                {
+                    lblErr.Text = "Fix show Name";
+                    return;
+                }
+                // Call the AI renaming method
+                FileRenamer.RenameEpisodesWithAI(folderPath, showName);
+            }
 
         }
 
@@ -189,6 +218,34 @@ namespace RenameEpisodeFiles
                 {
                     txtCopyFilesTo.Text = paths[0]; // This could be a file or a folder path
                 }
+            }
+        }
+
+        private void radioModeAI_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioModeAI.Checked)
+            {
+                _renameMode = RenameMode.AI;
+                btnRename.Text = "Rename with AI";
+            }
+            else
+            {
+                _renameMode = RenameMode.Default;
+                btnRename.Text = "Rename Files";
+            }
+        }
+
+        private void radioModeDefault_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioModeDefault.Checked)
+            {
+                _renameMode = RenameMode.Default;
+                btnRename.Text = "Rename Files";
+            }
+            else
+            {
+                _renameMode = RenameMode.AI;
+                btnRename.Text = "Rename with AI";
             }
         }
     }

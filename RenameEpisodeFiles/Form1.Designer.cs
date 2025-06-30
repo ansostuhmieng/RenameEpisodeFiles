@@ -49,8 +49,8 @@
             label6 = new Label();
             button1 = new Button();
             ModeGroup = new GroupBox();
-            radioModeDefault = new RadioButton();
             radioModeAI = new RadioButton();
+            radioModeDefault = new RadioButton();
             ModeGroup.SuspendLayout();
             SuspendLayout();
             // 
@@ -131,9 +131,9 @@
             // 
             // btnRename
             // 
-            btnRename.Location = new Point(676, 404);
+            btnRename.Location = new Point(640, 404);
             btnRename.Name = "btnRename";
-            btnRename.Size = new Size(112, 34);
+            btnRename.Size = new Size(148, 34);
             btnRename.TabIndex = 6;
             btnRename.Text = "Rename Files";
             btnRename.UseVisualStyleBackColor = true;
@@ -237,6 +237,17 @@
             ModeGroup.TabIndex = 17;
             ModeGroup.TabStop = false;
             // 
+            // radioModeAI
+            // 
+            radioModeAI.AutoSize = true;
+            radioModeAI.Location = new Point(15, 46);
+            radioModeAI.Name = "radioModeAI";
+            radioModeAI.Size = new Size(106, 29);
+            radioModeAI.TabIndex = 1;
+            radioModeAI.Text = "AI Mode";
+            radioModeAI.UseVisualStyleBackColor = true;
+            radioModeAI.CheckedChanged += radioModeAI_CheckedChanged;
+            // 
             // radioModeDefault
             // 
             radioModeDefault.AutoSize = true;
@@ -248,16 +259,7 @@
             radioModeDefault.TabStop = true;
             radioModeDefault.Text = "Default Mode";
             radioModeDefault.UseVisualStyleBackColor = true;
-            // 
-            // radioModeAI
-            // 
-            radioModeAI.AutoSize = true;
-            radioModeAI.Location = new Point(15, 46);
-            radioModeAI.Name = "radioModeAI";
-            radioModeAI.Size = new Size(106, 29);
-            radioModeAI.TabIndex = 1;
-            radioModeAI.Text = "AI Mode";
-            radioModeAI.UseVisualStyleBackColor = true;
+            radioModeDefault.CheckedChanged += radioModeDefault_CheckedChanged;
             // 
             // Form1
             // 
