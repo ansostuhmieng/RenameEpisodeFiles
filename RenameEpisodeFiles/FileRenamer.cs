@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using OpenAI.Net;
+using OpenAI.Net.Models.Responses;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using OpenAI.Net;
 
 namespace RenameEpisodeFiles
 {
@@ -62,12 +64,24 @@ namespace RenameEpisodeFiles
 
             // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
             var openAIService = Program.OpenAIService;
-            var response = await openAIService.Chat.Get($"Extract episode names from the following file names:\n{fileNamesString}\n\nPlease provide the episode names in the format 'SxxExx - Episode Name'.", (options) =>
+            var response = await openAIService.Chat.Get($"The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<PascalCase Title>.<Extension>. If the Title isn't in the filename, grab it from theTVDB, using the {showName} DVD Order tab.\r\n{fileNamesString}\r\nGive me back the list of updated filenames", (options) =>
             {
                 options.Model = "gpt-3.5-turbo";
                 options.MaxTokens = 1000;
                 options.Temperature = 0.7;
             });
+
+            if (response.IsSuccess)
+            {
+                var aiResponseText = response.Result!.Choices[0].Message.Content;
+                Program.Logger.LogDebug($"AI Response: {aiResponseText}");
+            }
+            else
+            {
+                Program.Logger.LogError(response.ErrorResponse?.Error?.Message);
+            }
+
+            
         }
 
 
