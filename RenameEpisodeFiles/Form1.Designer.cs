@@ -51,6 +51,7 @@
             ModeGroup = new GroupBox();
             radioModeAI = new RadioButton();
             radioModeDefault = new RadioButton();
+            progressRename = new ProgressBar();
             ModeGroup.SuspendLayout();
             SuspendLayout();
             // 
@@ -137,7 +138,7 @@
             btnRename.TabIndex = 6;
             btnRename.Text = "Rename Files";
             btnRename.UseVisualStyleBackColor = true;
-            btnRename.Click += btnRename_Click;
+            btnRename.Click += btnRename_ClickAsync;
             // 
             // lblErr
             // 
@@ -261,12 +262,22 @@
             radioModeDefault.UseVisualStyleBackColor = true;
             radioModeDefault.CheckedChanged += radioModeDefault_CheckedChanged;
             // 
+            // progressRename
+            // 
+            progressRename.Location = new Point(403, 404);
+            progressRename.Name = "progressRename";
+            progressRename.Size = new Size(231, 34);
+            progressRename.Style = ProgressBarStyle.Marquee;
+            progressRename.TabIndex = 18;
+            progressRename.Visible = false;
+            // 
             // Form1
             // 
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(progressRename);
             Controls.Add(ModeGroup);
             Controls.Add(button1);
             Controls.Add(label6);
@@ -319,5 +330,6 @@
         private GroupBox ModeGroup;
         private RadioButton radioModeDefault;
         private RadioButton radioModeAI;
+        private ProgressBar progressRename;
     }
 }

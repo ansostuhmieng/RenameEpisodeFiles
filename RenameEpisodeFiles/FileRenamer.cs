@@ -48,7 +48,7 @@ namespace RenameEpisodeFiles
             return lastEpisode;
         }
 
-        public static async void RenameEpisodesWithAI(string folderPath, string showName)
+        public static async Task RenameEpisodesWithAI(string folderPath, string showName)
         {
             // Get all files in the directory
             var files = new DirectoryInfo(folderPath)

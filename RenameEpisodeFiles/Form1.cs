@@ -18,7 +18,7 @@ namespace RenameEpisodeFiles
             InitializeComponent();
         }
 
-        private void btnRename_Click(object sender, EventArgs e)
+        private async void btnRename_ClickAsync(object sender, EventArgs e)
         {
 
             if (_renameMode == RenameMode.Default)
@@ -98,8 +98,13 @@ namespace RenameEpisodeFiles
                     lblErr.Text = "Fix show Name";
                     return;
                 }
+
+                btnRename.Enabled = false; // Disable button to prevent multiple clicks
+                progressRename.Visible = true; // Show progress bar
                 // Call the AI renaming method
-                FileRenamer.RenameEpisodesWithAI(folderPath, showName);
+                await FileRenamer.RenameEpisodesWithAI(folderPath, showName);
+                progressRename.Visible = false; // Hide progress bar after operation
+                btnRename.Enabled = true; // Re-enable button after operation;
             }
 
         }
