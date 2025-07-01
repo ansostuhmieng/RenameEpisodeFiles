@@ -75,6 +75,23 @@ namespace RenameEpisodeFiles
             {
                 var aiResponseText = response.Result!.Choices[0].Message.Content;
                 Program.Logger.LogDebug($"AI Response: {aiResponseText}");
+                // Split the response into an array of lines
+                var newFileNames = aiResponseText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Trim())
+                    .ToList();
+                // Rename files based on AI response
+                for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
+                {
+                    var file = files[i];
+                    string newFileName = newFileNames[i];
+                    string newFilePath = Path.Combine(folderPath, newFileName);
+                    // Check if the new file name is different before renaming
+                    if (!string.Equals(file.FullName, newFilePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        File.Move(file.FullName, newFilePath);
+                        Program.Logger.LogInformation($"Renamed '{file.Name}' to '{newFileName}'");
+                    }
+                }
             }
             else
             {
