@@ -12,12 +12,12 @@ namespace RenameEpisodeFiles
 {
     internal class FileRenamer
     {
-       public static int RenameEpisodes(
-       string folderPath,
-       string showName,
-       int seasonNumber,
-       int startingEpisode,
-       string episodeNamesFile)
+        public static int RenameEpisodes(
+        string folderPath,
+        string showName,
+        int seasonNumber,
+        int startingEpisode,
+        string episodeNamesFile)
         {
             // Read episode names from file
             var episodeNames = File.ReadAllLines(episodeNamesFile)
@@ -64,10 +64,16 @@ namespace RenameEpisodeFiles
 
             // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
             var openAIService = Program.OpenAIService;
-            var response = await openAIService.Chat.Get($"The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<PascalCase Title>.<Extension>. If the Title isn't in the filename, grab it from theTVDB, using the {showName} DVD Order tab.\r\n{fileNamesString}\r\nGive me back the list of updated filenames", (options) =>
+            var response = await openAIService.Chat.Get($"""
+                The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
+                I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
+                If the Title isn't in the filename, grab it from theTVDB, using the {showName} DVD Order tab for that <Season Number>.\r\n{fileNamesString}\r\n
+                Return back only the list of updated filenames without any other text. 
+                Do not include bullets or number prefixes.
+                """, (options) =>
             {
                 options.Model = "gpt-3.5-turbo";
-                options.MaxTokens = 1000;
+                options.MaxTokens = 2000;
                 options.Temperature = 0.7;
             });
 
@@ -80,25 +86,32 @@ namespace RenameEpisodeFiles
                     .Select(line => line.Trim())
                     .ToList();
                 // Rename files based on AI response
-                for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
-                {
-                    var file = files[i];
-                    string newFileName = newFileNames[i];
-                    string newFilePath = Path.Combine(folderPath, newFileName);
-                    // Check if the new file name is different before renaming
-                    if (!string.Equals(file.FullName, newFilePath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        File.Move(file.FullName, newFilePath);
-                        Program.Logger.LogInformation($"Renamed '{file.Name}' to '{newFileName}'");
-                    }
-                }
+                RenameFiles(folderPath, files, newFileNames);
             }
             else
             {
                 Program.Logger.LogError(response.ErrorResponse?.Error?.Message);
             }
 
-            
+            static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
+            {
+                for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
+                {
+                    var file = files[i];
+                    string newFileName = SanitizeFileName(newFileNames[i]);
+                    string newFilePath = Path.Combine(folderPath, newFileName);
+                    // Check if the new file name is different before renaming
+                    if (FileDoesNotExist(file.FullName, newFilePath))
+                    {
+                        File.Move(file.FullName, newFilePath);
+                        Program.Logger.LogInformation($"Renamed '{file.FullName}' to '{newFileName}'");
+                    }
+                    else
+                    {
+                        Program.Logger.LogInformation($"Skipped '{newFilePath}' as it already exists");
+                    }
+                }
+            }
         }
 
 
@@ -132,5 +145,27 @@ namespace RenameEpisodeFiles
             return outputFilePath;
         }
 
+        public static string SanitizeFileName(string fileName, char replacement = '_')
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return string.Empty;
+
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = new StringBuilder(fileName.Length);
+
+            foreach (char c in fileName)
+            {
+                sanitized.Append(invalidChars.Contains(c) ? replacement : c);
+            }
+
+            // Trim trailing spaces or periods (not allowed in Windows)
+            return sanitized.ToString().TrimEnd(' ', '.');
+        }
+
+        private static bool FileDoesNotExist(string currentFile, string newFilePath)
+        {
+            return (!string.Equals(currentFile, newFilePath, StringComparison.OrdinalIgnoreCase)) && 
+                   !File.Exists(newFilePath);
+        }
     }
 }
