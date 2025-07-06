@@ -45,6 +45,8 @@ Startrekds9.s04e26.mkv
 $subfolder = "TestFiles"
 New-Item -ItemType Directory -Path $subfolder -Force | Out-Null
 
+Get-ChildItem $subFolder -File | Remove-Item | Out-Null
+
 foreach ($filename in $filenames) {
     $trimmed = $filename.Trim()
     if ($trimmed) {
