@@ -67,13 +67,13 @@ namespace RenameEpisodeFiles
             var response = await openAIService.Chat.Get($"""
                 The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
                 I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
-                Get the <Title> from theTVDB, using the {showName} DVD Order tab for that <Season Number>.\r\n{fileNamesString}\r\n
+                Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.\r\n{fileNamesString}\r\n
                 Return back only the list of updated filenames without any response text. 
                 Do not include bullets or number prefixes.
                 """, (options) =>
             {
                 options.Model = "gpt-4.1";
-                options.MaxTokens = 2000;
+                options.MaxTokens = 4000;
                 options.Temperature = 0.7;
             });
 
