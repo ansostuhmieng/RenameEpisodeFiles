@@ -51,78 +51,88 @@ namespace RenameEpisodeFiles
         public static async Task RenameEpisodesWithAI(string folderPath, string showName)
         {
             // Get all files in the directory
-            var files = new DirectoryInfo(folderPath)
+            var allFiles = new DirectoryInfo(folderPath)
                 .GetFiles()
                 .OrderBy(f => f.CreationTime)
                 .ToList();
 
-            // Convert to a list of file names as newline -separated strings
-            var fileNames = files.Select(f => f.Name).ToList();
+            var newFileNames = new List<string>();
+            const int CHUNK_SIZE = 3;
 
-            // Convert the list to a single string with each filename on a new line
-            string fileNamesString = string.Join(Environment.NewLine, fileNames);
+            // Chunk the AI calls into groups of 3 files at a time
+            for (int i = 0; i < allFiles.Count; i += CHUNK_SIZE)
+            {
+                var files = allFiles.Skip(i).Take(CHUNK_SIZE).ToArray();
+                // Convert to a list of file names as newline -separated strings
+                var fileNames = files.Select(f => f.Name).ToList();
 
-            // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
-            var openAIService = Program.OpenAIService;
-            var response = await openAIService.Chat.Get($"""
-                The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
-                I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
-                Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.\r\n{fileNamesString}\r\n
-                Return back only the list of updated filenames without any response text. 
-                Do not include bullets or number prefixes.
-                """, (options) =>
-            {
-                options.Model = "gpt-4.1";
-                options.MaxTokens = 4000;
-                options.Temperature = 0.7;
-            });
+                // Convert the list to a single string with each filename on a new line
+                string fileNamesString = string.Join(Environment.NewLine, fileNames);
 
-            if (response.IsSuccess)
-            {
-                var aiResponseText = response.Result!.Choices[0].Message.Content;
-                Program.Logger.LogDebug($"AI Response: {aiResponseText}");
-                // Split the response into an array of lines
-                var newFileNames = aiResponseText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(line => line.Trim())
-                    .ToList();
-                // Rename files based on AI response
-                RenameFiles(folderPath, files, newFileNames);
-            }
-            else
-            {
-                Program.Logger.LogError(response.ErrorResponse?.Error?.Message);
-            }
-
-            static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
-            {
-                for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
+                // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
+                var openAIService = Program.OpenAIService;
+                var response = await openAIService.Chat.Get($"""
+                    The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
+                    I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
+                    Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.\r\n{fileNamesString}\r\n
+                    Return back only the list of updated filenames without any response text. 
+                    Do not include bullets or number prefixes.
+                    """, (options) =>
                 {
-                    var file = files[i];
-                    string newFileName = SanitizeFileName(newFileNames[i]);
-                    string newFilePath = Path.Combine(folderPath, newFileName);
-                    // Check if the new file name is different before renaming
-                    if (FileDoesNotExist(file.FullName, newFilePath))
+                    options.Model = "gpt-4.1";
+                    options.MaxTokens = 4000;
+                    options.Temperature = 0.7;
+                });
+
+                if (response.IsSuccess)
+                {
+                    var aiResponseText = response.Result!.Choices[0].Message.Content;
+                    Program.Logger.LogDebug($"AI Response: {aiResponseText}");
+                    // Split the response into an array of lines
+                    var fileNameList = aiResponseText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(line => line.Trim())
+                        .ToList();
+
+                    newFileNames.AddRange(fileNameList);
+                }
+                else
+                {
+                    Program.Logger.LogError(response.ErrorResponse?.Error?.Message);
+                }
+            }
+
+            // Rename files based on AI response
+            RenameFiles(folderPath, allFiles, newFileNames);            
+        }
+
+        static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
+        {
+            for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
+            {
+                var file = files[i];
+                string newFileName = SanitizeFileName(newFileNames[i]);
+                string newFilePath = Path.Combine(folderPath, newFileName);
+                // Check if the new file name is different before renaming
+                if (FileDoesNotExist(file.FullName, newFilePath))
+                {
+                    Program.Logger.LogInformation($"Renaming '{file.FullName}' to '{newFileName}'");
+                    try
                     {
-                        Program.Logger.LogInformation($"Renaming '{file.FullName}' to '{newFileName}'");
-                        try
-                        {
                         File.Move(file.FullName, newFilePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            Program.Logger.LogError(new EventId(), ex, ex.Message);
-                            continue;
-                        }
-                        Program.Logger.LogInformation($"Renamed '{file.FullName}' to '{newFileName}'");
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Program.Logger.LogInformation($"Skipped '{newFilePath}' as it already exists");
+                        Program.Logger.LogError(new EventId(), ex, ex.Message);
+                        continue;
                     }
+                    Program.Logger.LogInformation($"Renamed '{file.FullName}' to '{newFileName}'");
+                }
+                else
+                {
+                    Program.Logger.LogInformation($"Skipped '{newFilePath}' as it already exists");
                 }
             }
         }
-
 
         public static string ExtractAndWriteEpisodeNames(string inputFilePath)
         {
