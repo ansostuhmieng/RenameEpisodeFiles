@@ -10,10 +10,10 @@ namespace RenameEpisodeFiles
 {
     internal static class Program
     {
-        public static IConfiguration Configuration { get; private set; }
-        public static IOpenAIService OpenAIService { get; private set; }
-        public static ILoggerFactory LoggerFactory { get; private set; }
-        public static ILogger Logger { get; private set; }
+        public static IConfiguration Configuration { get; private set; } = null!;
+        public static IOpenAIService? OpenAIService { get; private set; }
+        public static ILoggerFactory LoggerFactory { get; private set; } = null!;
+        public static ILogger Logger { get; private set; } = null!;
 
         /// <summary>
         ///  The main entry point for the application.
@@ -24,17 +24,19 @@ namespace RenameEpisodeFiles
             // Build configuration to load secrets.json from the application directory
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("secrets.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("secrets.json", optional: true, reloadOnChange: true)
                 .Build();
 
-            // Configure OpenAI service
-            var services = new ServiceCollection();
-            services.AddOpenAIServices(options =>
+            // Configure OpenAI service only if Configuration is not null and ApiKey exists
+            if (Configuration != null && !string.IsNullOrWhiteSpace(Configuration["OpenAI:ApiKey"]))
             {
-                options.ApiKey = Configuration["OpenAI:ApiKey"];
-            });
-            var provider = services.BuildServiceProvider();
-            OpenAIService = provider.GetRequiredService<IOpenAIService>();
+                var services = new ServiceCollection().AddOpenAIServices(static options =>
+                {
+                    options.ApiKey = Configuration["OpenAI:ApiKey"];
+                });
+                var provider = services.BuildServiceProvider();
+                OpenAIService = provider.GetRequiredService<IOpenAIService>();
+            }
 
             // Configure logging
             LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>

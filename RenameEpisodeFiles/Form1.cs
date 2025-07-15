@@ -16,6 +16,11 @@ namespace RenameEpisodeFiles
         public Form1()
         {
             InitializeComponent();
+
+            if(Program.OpenAIService != null)
+            {
+                ModeGroup.Visible = true;
+            }
         }
 
         private async void btnRename_ClickAsync(object sender, EventArgs e)
