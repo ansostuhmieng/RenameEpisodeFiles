@@ -35,6 +35,7 @@ It is specifically designed for users of tools like Plex or Embi who are making 
 
 ## AI Mode
 AI Mode is a experimental mode, hidden by default, that uses the season and episode number in a filename to automatically retrieve episode titles from theTVDB.com.
+![Screenshot of Rename Episodes app in AI mode](renep-ai.png)
 
 > To enable the AI mode toggle, you will need:
 >
