@@ -1,24 +1,42 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.Net;
 using OpenAI.Net.Models.Responses;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace RenameEpisodeFiles
 {
+    public record FileRenameRecord(string OriginalFileName, string NewFileName, DateTime RenameTime);
+
     internal class FileRenamer
     {
-        public static int RenameEpisodes(
-        string folderPath,
-        string showName,
-        int seasonNumber,
-        int startingEpisode,
-        string episodeNamesFile)
+        private static readonly string HistoryFolder = Path.Combine(
+            AppContext.BaseDirectory,
+            "History");
+
+        private static void SaveRenameHistory(List<FileRenameRecord> renameHistory)
         {
+            Directory.CreateDirectory(HistoryFolder);
+            var timestamp = DateTime.Now.ToString("yyyyMMddTHHmmss");
+            var historyFile = Path.Combine(HistoryFolder, $"rename_history_{timestamp}.json");
+            
+            var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+            var jsonString = JsonSerializer.Serialize(renameHistory, jsonOptions);
+            File.WriteAllText(historyFile, jsonString);
+            
+            Program.Logger.LogInformation($"Rename history saved to: {historyFile}");
+        }
+
+        public static int RenameEpisodes(
+            string folderPath,
+            string showName,
+            int seasonNumber,
+            int startingEpisode,
+            string episodeNamesFile)
+        {
+            var renameHistory = new List<FileRenameRecord>();
+            
             // Read episode names from file
             var episodeNames = File.ReadAllLines(episodeNamesFile)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
@@ -31,7 +49,6 @@ namespace RenameEpisodeFiles
                 .ToList();
 
             int episodeIndex = startingEpisode - 1;
-
             int lastEpisode = episodeIndex;
 
             for (int i = 0; i < files.Count && episodeIndex < episodeNames.Count; i++, episodeIndex++)
@@ -42,7 +59,13 @@ namespace RenameEpisodeFiles
                 string newFilePath = Path.Combine(folderPath, newFileName);
 
                 File.Move(file.FullName, newFilePath);
+                renameHistory.Add(new FileRenameRecord(file.Name, newFileName, DateTime.Now));
                 lastEpisode = episodeIndex + 1;
+            }
+
+            if (renameHistory.Any())
+            {
+                SaveRenameHistory(renameHistory);
             }
 
             return lastEpisode;
@@ -107,11 +130,14 @@ namespace RenameEpisodeFiles
 
         static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
         {
+            var renameHistory = new List<FileRenameRecord>();
+
             for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
             {
                 var file = files[i];
                 string newFileName = SanitizeFileName(newFileNames[i]);
                 string newFilePath = Path.Combine(folderPath, newFileName);
+                
                 // Check if the new file name is different before renaming
                 if (FileDoesNotExist(file.FullName, newFilePath))
                 {
@@ -119,6 +145,7 @@ namespace RenameEpisodeFiles
                     try
                     {
                         File.Move(file.FullName, newFilePath);
+                        renameHistory.Add(new FileRenameRecord(file.Name, newFileName, DateTime.Now));
                     }
                     catch (Exception ex)
                     {
@@ -131,6 +158,11 @@ namespace RenameEpisodeFiles
                 {
                     Program.Logger.LogInformation($"Skipped '{newFilePath}' as it already exists");
                 }
+            }
+
+            if (renameHistory.Any())
+            {
+                SaveRenameHistory(renameHistory);
             }
         }
 
