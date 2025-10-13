@@ -104,7 +104,7 @@ namespace RenameEpisodeFiles
                 {
                     options.Model = "gpt-4.1";
                     options.MaxTokens = 4000;
-                    options.Temperature = 0.7;
+                    options.Temperature = 0;
                 });
 
                 if (response.IsSuccess)
