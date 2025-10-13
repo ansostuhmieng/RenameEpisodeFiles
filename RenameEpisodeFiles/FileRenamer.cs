@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace RenameEpisodeFiles
 {
-    public record FileRenameRecord(string OriginalFileName, string NewFileName, DateTime RenameTime);
+    public record FileRenameRecord(string OriginalFileName, string NewFileName, string OriginalFullPath, string NewFullPath, DateTime RenameTime);
 
     internal class FileRenamer
     {
@@ -59,7 +59,7 @@ namespace RenameEpisodeFiles
                 string newFilePath = Path.Combine(folderPath, newFileName);
 
                 File.Move(file.FullName, newFilePath);
-                renameHistory.Add(new FileRenameRecord(file.Name, newFileName, DateTime.Now));
+                renameHistory.Add(new FileRenameRecord(file.Name, newFileName, file.FullName, newFilePath, DateTime.Now));
                 lastEpisode = episodeIndex + 1;
             }
 
@@ -145,7 +145,7 @@ namespace RenameEpisodeFiles
                     try
                     {
                         File.Move(file.FullName, newFilePath);
-                        renameHistory.Add(new FileRenameRecord(file.Name, newFileName, DateTime.Now));
+                        renameHistory.Add(new FileRenameRecord(file.Name, newFileName, file.FullName, newFilePath, DateTime.Now));
                     }
                     catch (Exception ex)
                     {
@@ -163,6 +163,86 @@ namespace RenameEpisodeFiles
             if (renameHistory.Any())
             {
                 SaveRenameHistory(renameHistory);
+            }
+        }
+
+        public static bool UndoLastRename()
+        {
+            try
+            {
+                // Ensure history folder exists
+                if (!Directory.Exists(HistoryFolder))
+                {
+                    Program.Logger.LogInformation("No rename history found to undo");
+                    return false;
+                }
+
+                // Get the latest history file
+                var historyFiles = Directory.GetFiles(HistoryFolder, "rename_history_*.json")
+                    .OrderByDescending(f => f)
+                    .ToList();
+
+                if (!historyFiles.Any())
+                {
+                    Program.Logger.LogInformation("No rename history files found to undo");
+                    return false;
+                }
+
+                var latestHistoryFile = historyFiles.First();
+                var jsonString = File.ReadAllText(latestHistoryFile);
+                var renameHistory = JsonSerializer.Deserialize<List<FileRenameRecord>>(jsonString);
+
+                if (renameHistory == null || !renameHistory.Any())
+                {
+                    Program.Logger.LogInformation("Empty rename history in file");
+                    return false;
+                }
+
+                // Prepare reverse rename operations using full paths
+                var filesToRename = new List<FileInfo>();
+                var originalNames = new List<string>();
+                var originalPaths = new List<string>();
+
+                foreach (var record in renameHistory)
+                {
+                    if (File.Exists(record.NewFullPath))
+                    {
+                        filesToRename.Add(new FileInfo(record.NewFullPath));
+                        originalNames.Add(Path.GetFileName(record.OriginalFullPath));
+                        originalPaths.Add(record.OriginalFullPath);
+                    }
+                }
+
+                if (!filesToRename.Any())
+                {
+                    Program.Logger.LogInformation("No files found to undo rename");
+                    return false;
+                }
+
+                // Actually move files back to their original full paths
+                for (int i = 0; i < filesToRename.Count; i++)
+                {
+                    var file = filesToRename[i];
+                    var originalPath = originalPaths[i];
+                    try
+                    {
+                        File.Move(file.FullName, originalPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Program.Logger.LogError(ex, $"Error undoing rename for {file.FullName}");
+                    }
+                }
+
+                // Delete the history file after successful undo
+                File.Delete(latestHistoryFile);
+                Program.Logger.LogInformation($"Successfully undid renames from {latestHistoryFile}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.LogError(ex, "Error while trying to undo rename");
+                return false;
             }
         }
 

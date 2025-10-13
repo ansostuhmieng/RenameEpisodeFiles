@@ -53,6 +53,7 @@
             radioModeAI = new RadioButton();
             radioModeDefault = new RadioButton();
             progressRename = new ProgressBar();
+            btnUndo = new Button();
             ModeGroup.SuspendLayout();
             SuspendLayout();
             // 
@@ -183,7 +184,6 @@
             btnFindFolder.Name = "btnFindFolder";
             btnFindFolder.Size = new Size(43, 38);
             btnFindFolder.TabIndex = 12;
-            btnFindFolder.Text = "?";
             btnFindFolder.UseVisualStyleBackColor = true;
             btnFindFolder.Click += btnFindFolder_Click;
             // 
@@ -274,12 +274,25 @@
             progressRename.TabIndex = 18;
             progressRename.Visible = false;
             // 
+            // btnUndo
+            // 
+            btnUndo.Location = new Point(24, 390);
+            btnUndo.Name = "btnUndo";
+            btnUndo.Size = new Size(132, 47);
+            btnUndo.TabIndex = 19;
+            btnUndo.Text = "Undo Rename";
+            btnUndo.TextAlign = ContentAlignment.MiddleLeft;
+            btnUndo.UseVisualStyleBackColor = true;
+            btnUndo.Visible = false;
+            btnUndo.Click += btnUndo_Click;
+            // 
             // Form1
             // 
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnUndo);
             Controls.Add(progressRename);
             Controls.Add(ModeGroup);
             Controls.Add(button1);
@@ -335,5 +348,6 @@
         private RadioButton radioModeDefault;
         private RadioButton radioModeAI;
         private ProgressBar progressRename;
+        private Button btnUndo;
     }
 }

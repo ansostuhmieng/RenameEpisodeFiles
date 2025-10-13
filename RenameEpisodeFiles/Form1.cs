@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
@@ -21,6 +22,9 @@ namespace RenameEpisodeFiles
             {
                 ModeGroup.Visible = true;
             }
+            
+            // Initially hide the undo button
+            btnUndo.Visible = false;
         }
 
         private async void btnRename_ClickAsync(object sender, EventArgs e)
@@ -67,6 +71,9 @@ namespace RenameEpisodeFiles
 
                 int lastEpisode = FileRenamer.RenameEpisodes(folderPath, showName, seasonNumber, episodeNumber, dataPath);
 
+                // Show undo button after successful rename
+                btnUndo.Visible = true;
+
                 // copy the files over to the destination after the rename
                 // but only if the field is populated
                 if (!string.IsNullOrEmpty(txtCopyFilesTo.Text))
@@ -106,12 +113,40 @@ namespace RenameEpisodeFiles
 
                 btnRename.Enabled = false; // Disable button to prevent multiple clicks
                 progressRename.Visible = true; // Show progress bar
+                
                 // Call the AI renaming method
                 await FileRenamer.RenameEpisodesWithAI(folderPath, showName);
+                
                 progressRename.Visible = false; // Hide progress bar after operation
-                btnRename.Enabled = true; // Re-enable button after operation;
+                btnRename.Enabled = true; // Re-enable button after operation
+                btnUndo.Visible = true; // Show undo button after successful rename
             }
+        }
 
+        private void btnUndo_Click(object sender, EventArgs e)
+        {
+            lblErr.Text = "";
+            try
+            {
+                btnUndo.Enabled = false;
+                if (FileRenamer.UndoLastRename())
+                {
+                    btnUndo.Visible = false;
+                }
+                else
+                {
+                    lblErr.Text = "No rename operation to undo";
+                }
+            }
+            catch (Exception ex)
+            {
+                lblErr.Text = "Error while undoing rename";
+                Program.Logger.LogError(ex, "Error in undo operation");
+            }
+            finally
+            {
+                btnUndo.Enabled = true;
+            }
         }
 
         private void btnCleanEpisodeData_Click(object sender, EventArgs e)
