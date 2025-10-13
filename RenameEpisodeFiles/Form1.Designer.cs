@@ -82,7 +82,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(11, 92);
+            label2.Location = new Point(11, 140);
             label2.Name = "label2";
             label2.Size = new Size(211, 25);
             label2.TabIndex = 2;
@@ -90,7 +90,7 @@
             // 
             // txtFirstEpisode
             // 
-            txtFirstEpisode.Location = new Point(229, 92);
+            txtFirstEpisode.Location = new Point(229, 140);
             txtFirstEpisode.Name = "txtFirstEpisode";
             txtFirstEpisode.Size = new Size(65, 31);
             txtFirstEpisode.TabIndex = 3;
@@ -99,7 +99,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(83, 52);
+            label3.Location = new Point(83, 100);
             label3.Name = "label3";
             label3.Size = new Size(139, 25);
             label3.TabIndex = 4;
@@ -107,7 +107,7 @@
             // 
             // txtSeasonNumber
             // 
-            txtSeasonNumber.Location = new Point(229, 48);
+            txtSeasonNumber.Location = new Point(229, 96);
             txtSeasonNumber.Name = "txtSeasonNumber";
             txtSeasonNumber.Size = new Size(65, 31);
             txtSeasonNumber.TabIndex = 2;
@@ -115,7 +115,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(106, 142);
+            label4.Location = new Point(106, 190);
             label4.Name = "label4";
             label4.Size = new Size(117, 25);
             label4.TabIndex = 6;
@@ -124,7 +124,7 @@
             // txtEpisodeData
             // 
             txtEpisodeData.AllowDrop = true;
-            txtEpisodeData.Location = new Point(229, 137);
+            txtEpisodeData.Location = new Point(229, 185);
             txtEpisodeData.Name = "txtEpisodeData";
             txtEpisodeData.Size = new Size(510, 31);
             txtEpisodeData.TabIndex = 4;
@@ -153,7 +153,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(106, 187);
+            label5.Location = new Point(106, 55);
             label5.Name = "label5";
             label5.Size = new Size(108, 25);
             label5.TabIndex = 10;
@@ -161,14 +161,14 @@
             // 
             // txtShowName
             // 
-            txtShowName.Location = new Point(229, 182);
+            txtShowName.Location = new Point(229, 50);
             txtShowName.Name = "txtShowName";
             txtShowName.Size = new Size(510, 31);
             txtShowName.TabIndex = 5;
             // 
             // btnCleanEpisodeData
             // 
-            btnCleanEpisodeData.Location = new Point(17, 390);
+            btnCleanEpisodeData.Location = new Point(583, 229);
             btnCleanEpisodeData.Name = "btnCleanEpisodeData";
             btnCleanEpisodeData.Size = new Size(206, 47);
             btnCleanEpisodeData.TabIndex = 11;
@@ -178,7 +178,8 @@
             // 
             // btnFindFolder
             // 
-            btnFindFolder.Location = new Point(746, 7);
+            btnFindFolder.Image = Properties.Resources.matt_icons_folder_yellow_small;
+            btnFindFolder.Location = new Point(746, 1);
             btnFindFolder.Name = "btnFindFolder";
             btnFindFolder.Size = new Size(43, 38);
             btnFindFolder.TabIndex = 12;
@@ -188,7 +189,7 @@
             // 
             // btnFindEpisodeData
             // 
-            btnFindEpisodeData.Location = new Point(746, 137);
+            btnFindEpisodeData.Location = new Point(746, 185);
             btnFindEpisodeData.Name = "btnFindEpisodeData";
             btnFindEpisodeData.Size = new Size(43, 38);
             btnFindEpisodeData.TabIndex = 13;
@@ -203,7 +204,7 @@
             // txtCopyFilesTo
             // 
             txtCopyFilesTo.AllowDrop = true;
-            txtCopyFilesTo.Location = new Point(229, 227);
+            txtCopyFilesTo.Location = new Point(229, 315);
             txtCopyFilesTo.Name = "txtCopyFilesTo";
             txtCopyFilesTo.Size = new Size(510, 31);
             txtCopyFilesTo.TabIndex = 14;
@@ -213,7 +214,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(106, 232);
+            label6.Location = new Point(106, 320);
             label6.Name = "label6";
             label6.Size = new Size(116, 25);
             label6.TabIndex = 15;
@@ -221,9 +222,9 @@
             // 
             // button1
             // 
-            button1.Location = new Point(746, 227);
+            button1.Location = new Point(746, 315);
             button1.Name = "button1";
-            button1.Size = new Size(43, 38);
+            button1.Size = new Size(43, 39);
             button1.TabIndex = 16;
             button1.Text = "?";
             button1.UseVisualStyleBackColor = true;
@@ -233,9 +234,9 @@
             // 
             ModeGroup.Controls.Add(radioModeAI);
             ModeGroup.Controls.Add(radioModeDefault);
-            ModeGroup.Location = new Point(481, 52);
+            ModeGroup.Location = new Point(477, 89);
             ModeGroup.Name = "ModeGroup";
-            ModeGroup.Size = new Size(259, 78);
+            ModeGroup.Size = new Size(270, 78);
             ModeGroup.TabIndex = 17;
             ModeGroup.TabStop = false;
             ModeGroup.Visible = false;
@@ -243,7 +244,7 @@
             // radioModeAI
             // 
             radioModeAI.AutoSize = true;
-            radioModeAI.Location = new Point(150, 33);
+            radioModeAI.Location = new Point(155, 30);
             radioModeAI.Name = "radioModeAI";
             radioModeAI.Size = new Size(106, 29);
             radioModeAI.TabIndex = 1;
@@ -255,7 +256,7 @@
             // 
             radioModeDefault.AutoSize = true;
             radioModeDefault.Checked = true;
-            radioModeDefault.Location = new Point(6, 33);
+            radioModeDefault.Location = new Point(11, 30);
             radioModeDefault.Name = "radioModeDefault";
             radioModeDefault.Size = new Size(146, 29);
             radioModeDefault.TabIndex = 0;
