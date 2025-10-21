@@ -71,7 +71,7 @@ namespace RenameEpisodeFiles
             return lastEpisode;
         }
 
-        public static async Task RenameEpisodesWithAI(string folderPath, string showName)
+        public static async Task RenameEpisodesWithAI(string folderPath, string showName, bool byEpisodeNumber = true)
         {
             // Get all files in the directory
             var allFiles = new DirectoryInfo(folderPath)
@@ -94,17 +94,34 @@ namespace RenameEpisodeFiles
 
                 // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
                 var openAIService = Program.OpenAIService;
-                var response = await openAIService.Chat.Get($"""
+
+                string prompt = $"""
                     The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
                     I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
                     Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.\r\n{fileNamesString}\r\n
                     Return back only the list of updated filenames without any response text. 
                     Do not include bullets or number prefixes.
-                    """, (options) =>
+                    """;
+
+                if(!byEpisodeNumber)
                 {
-                    options.Model = "gpt-4.1";
+                    prompt = $"""
+                    You are an expert in TV show episode titles and metadata. 
+                    The following list of filenames are in the general format of <Show Name><Separator><Title>.<Extension>. 
+                    I want them to be in the format \"Dirty Jobs.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
+                    Search through every Season of the Show Name on theTVDB.com using the Aired Order and based on the supplied title 
+                    to match by similar title to get a list, then from that list get the closest matching title and and use that episode number. 
+                    If no Season and Episode are found, leave blank instead.\r\n{fileNamesString}\r\n
+                    Return back only the list of updated filenames without any response text. 
+                    Do not include bullets or number prefixes.
+                    """;
+                }
+
+                var response = await openAIService.Chat.Get(prompt, (options) =>
+                {
+                    options.Model = "gpt-5-search-api";
                     options.MaxTokens = 4000;
-                    options.Temperature = 0;
+                    options.ResponseFormat = new ChatResponseFormatType { Type = "text" };
                 });
 
                 if (response.IsSuccess)
