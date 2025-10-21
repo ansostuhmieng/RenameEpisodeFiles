@@ -114,8 +114,11 @@ namespace RenameEpisodeFiles
                 btnRename.Enabled = false; // Disable button to prevent multiple clicks
                 progressRename.Visible = true; // Show progress bar
                 
-                // Call the AI renaming method
-                await FileRenamer.RenameEpisodesWithAI(folderPath, showName);
+                // Determine AI option: true = by episode number, false = by title
+                bool byEpisodeNumber = btnAiByEp.Checked;
+
+                // Call the AI renaming method with the selected AI option
+                await FileRenamer.RenameEpisodesWithAI(folderPath, showName, byEpisodeNumber);
                 
                 progressRename.Visible = false; // Hide progress bar after operation
                 btnRename.Enabled = true; // Re-enable button after operation
@@ -272,11 +275,13 @@ namespace RenameEpisodeFiles
             {
                 _renameMode = RenameMode.AI;
                 btnRename.Text = "Rename with AI";
+                grpAiModeOptions.Visible = true;
             }
             else
             {
                 _renameMode = RenameMode.Default;
                 btnRename.Text = "Rename Files";
+                grpAiModeOptions.Visible = false;
             }
         }
 
@@ -286,11 +291,13 @@ namespace RenameEpisodeFiles
             {
                 _renameMode = RenameMode.Default;
                 btnRename.Text = "Rename Files";
+                grpAiModeOptions.Visible = false;
             }
             else
             {
                 _renameMode = RenameMode.AI;
                 btnRename.Text = "Rename with AI";
+                grpAiModeOptions.Visible = true;
             }
         }
     }
