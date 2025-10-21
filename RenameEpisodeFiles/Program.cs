@@ -1,19 +1,20 @@
-using System.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Debug;
 using Microsoft.Extensions.Logging.Console;
-using OpenAI.Net;
+using Microsoft.Extensions.Logging.Debug;
+using OpenAI;
+using OpenAI.Responses;
 using Serilog;
 using Serilog.Extensions.Logging;
+using System.Configuration;
 
 namespace RenameEpisodeFiles
 {
     internal static class Program
     {
         public static IConfiguration Configuration { get; private set; } = null!;
-        public static IOpenAIService? OpenAIService { get; private set; }
+        public static OpenAIResponseClient? OpenAIService { get; private set; }
         public static ILoggerFactory LoggerFactory { get; private set; } = null!;
         public static Microsoft.Extensions.Logging.ILogger Logger { get; private set; } = null!;
 
@@ -32,12 +33,10 @@ namespace RenameEpisodeFiles
             // Configure OpenAI service only if Configuration is not null and ApiKey exists
             if (Configuration != null && !string.IsNullOrWhiteSpace(Configuration["OpenAI:ApiKey"]))
             {
-                var services = new ServiceCollection().AddOpenAIServices(static options =>
-                {
-                    options.ApiKey = Configuration["OpenAI:ApiKey"];
-                });
-                var provider = services.BuildServiceProvider();
-                OpenAIService = provider.GetRequiredService<IOpenAIService>();
+                //OpenAIClient client = new(Configuration["OpenAI:ApiKey"]);
+                OpenAIService = new(
+                    model: "gpt-5-search-api",
+                    apiKey: Configuration["OpenAI:ApiKey"]);
             }
 
             // Configure Serilog for file logging
