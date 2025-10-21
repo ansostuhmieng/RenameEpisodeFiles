@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenAI.Net;
-using OpenAI.Net.Models.Responses;
+using OpenAI.Responses;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -92,12 +91,12 @@ namespace RenameEpisodeFiles
                 // Convert the list to a single string with each filename on a new line
                 string fileNamesString = string.Join(Environment.NewLine, fileNames);
 
-                // Make an API call to OpenAI to get the episode names using the OpenAI.Net.Client library
+                // Make an API call to OpenAI
                 var openAIService = Program.OpenAIService;
 
                 string prompt = $"""
                     The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
-                    I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
+                    I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>". 
                     Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.\r\n{fileNamesString}\r\n
                     Return back only the list of updated filenames without any response text. 
                     Do not include bullets or number prefixes.
@@ -108,7 +107,7 @@ namespace RenameEpisodeFiles
                     prompt = $"""
                     You are an expert in TV show episode titles and metadata. 
                     The following list of filenames are in the general format of <Show Name><Separator><Title>.<Extension>. 
-                    I want them to be in the format \"Dirty Jobs.S<Season Number>E<Episode Number>.<Title>.<Extension>. 
+                    I want them to be in the format \"<Show Name>.S<Season Number>E<Episode Number>.<Title>.<Extension>\". 
                     Search through every Season of the Show Name on theTVDB.com using the Aired Order and based on the supplied title 
                     to match by similar title to get a list, then from that list get the closest matching title and and use that episode number. 
                     If no Season and Episode are found, leave blank instead.\r\n{fileNamesString}\r\n
@@ -117,32 +116,44 @@ namespace RenameEpisodeFiles
                     """;
                 }
 
-                var response = await openAIService.Chat.Get(prompt, (options) =>
-                {
-                    options.Model = "gpt-5-search-api";
-                    options.MaxTokens = 4000;
-                    options.ResponseFormat = new ChatResponseFormatType { Type = "text" };
-                });
 
-                if (response.IsSuccess)
-                {
-                    var aiResponseText = response.Result!.Choices[0].Message.Content;
-                    Program.Logger.LogDebug($"AI Response: {aiResponseText}");
-                    // Split the response into an array of lines
-                    var fileNameList = aiResponseText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(line => line.Trim())
-                        .ToList();
 
-                    newFileNames.AddRange(fileNameList);
-                }
-                else
+#pragma warning disable OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+                OpenAIResponse response = await openAIService.CreateResponseAsync(
+                    userInputText: prompt,
+                    new ResponseCreationOptions()
+                    {
+                        Tools = { ResponseTool.CreateWebSearchTool() },
+                    });
+
+                foreach (ResponseItem item in response.OutputItems)
                 {
-                    Program.Logger.LogError(response.ErrorResponse?.Error?.Message);
+if (item is MessageResponseItem message)
+                    {
+                        Program.Logger.LogDebug($"[{message.Role}] {message.Content?.FirstOrDefault()?.Text}");
+                        Program.Logger.LogDebug($"AI Response: {response}");
+                    }
                 }
+#pragma warning restore OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+
+                //    if (!string.IsNullOrEmpty(response))
+                //    {
+                //        Program.Logger.LogDebug($"AI Response: {response}");
+                //        // Split the response into an array of lines
+                //        var fileNameList = response.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                //            .Select(line => line.Trim())
+                //            .ToList();
+
+                //        newFileNames.AddRange(fileNameList);
+                //    }
+                //    else
+                //    {
+                //        Program.Logger.LogError("Failed to get response from OpenAI");
+                //    }
             }
 
-            // Rename files based on AI response
-            RenameFiles(folderPath, allFiles, newFileNames);
+            //// Rename files based on AI response
+            //RenameFiles(folderPath, allFiles, newFileNames);
         }
 
         static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
