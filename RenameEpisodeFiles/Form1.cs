@@ -65,7 +65,7 @@ namespace RenameEpisodeFiles
                 {
                     string fileName = Path.GetFileName(filePath);
                     string destPath = Path.Combine(destinationDirectory, fileName);
-                    File.Copy(filePath, destPath, overwrite: true);
+                    File.Move(filePath, destPath, overwrite: true);
                 }
             }
 
