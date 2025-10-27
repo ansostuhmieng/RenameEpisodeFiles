@@ -30,12 +30,12 @@ namespace RenameEpisodeFiles
                 .AddJsonFile("secrets.json", optional: true, reloadOnChange: true)
                 .Build();
 
-            // Configure OpenAI service only if Configuration is not null and ApiKey exists
+            // Configure OpenAI Responses service only if ApiKey exists
             if (Configuration != null && !string.IsNullOrWhiteSpace(Configuration["OpenAI:ApiKey"]))
             {
-                //OpenAIClient client = new(Configuration["OpenAI:ApiKey"]);
-                OpenAIService = new(
-                    model: "gpt-5-search-api",
+                // Use the GPT-5 web search model via the Responses client
+                OpenAIService = new OpenAIResponseClient(
+                    model: "gpt-5",
                     apiKey: Configuration["OpenAI:ApiKey"]);
             }
 
