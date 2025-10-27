@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using OpenAI;
 using OpenAI.Responses;
 using System.Text;
 using System.Text.Json;
@@ -81,79 +82,99 @@ namespace RenameEpisodeFiles
             var newFileNames = new List<string>();
             const int CHUNK_SIZE = 3;
 
-            // Chunk the AI calls into groups of 3 files at a time
+            var openAIService = Program.OpenAIService;
+            if (openAIService == null)
+            {
+                Program.Logger.LogError("OpenAI Responses service is not configured");
+                return;
+            }
+
+            // Chunk the AI calls into groups of CHUNK_SIZE files at a time
             for (int i = 0; i < allFiles.Count; i += CHUNK_SIZE)
             {
                 var files = allFiles.Skip(i).Take(CHUNK_SIZE).ToArray();
-                // Convert to a list of file names as newline -separated strings
+                // Convert to a list of file names as newline-separated strings
                 var fileNames = files.Select(f => f.Name).ToList();
 
                 // Convert the list to a single string with each filename on a new line
                 string fileNamesString = string.Join(Environment.NewLine, fileNames);
 
-                // Make an API call to OpenAI
-                var openAIService = Program.OpenAIService;
-
-                string prompt = $"""
-                    The following list of filenames are in the format of <Show Title><Separator><Season><Episodes><Separator><Optional Title>.<Extension>. 
-                    I want them to be in the format \"{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>". 
-                    Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.\r\n{fileNamesString}\r\n
-                    Return back only the list of updated filenames without any response text. 
+                string prompt = byEpisodeNumber ?
+                    $"""
+                    You are a TV show episode naming expert. You'll receive a list of filenames to rename.
+                    Your task is to return them in the format "{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>".
+                    Get the <Title> from theTVDB, using the {showName} tab for that <Season Number>.
+                    Return only the renamed filenames, one per line, without any additional text.
                     Do not include bullets or number prefixes.
+                    \n{fileNamesString}
+                    """ :
+                    $"""
+                    You are a TV show episode title expert. You'll receive filenames in the format "<Show Name><Separator><Title>.<Extension>".
+                    Your task is to return them in the format "{showName}.S<Season Number>E<Episode Number>.<Title>.<Extension>".
+                    Search every Season of {showName} on theTVDB.com using Aired Order to find similar titles.
+                    Use the closest matching title and its episode number. Leave season/episode blank if no match found.
+                    Return only the renamed filenames, one per line, without any additional text.
+                    Do not include bullets or number prefixes.
+                    \n{fileNamesString}
                     """;
 
-                if(!byEpisodeNumber)
+                try
                 {
-                    prompt = $"""
-                    You are an expert in TV show episode titles and metadata. 
-                    The following list of filenames are in the general format of <Show Name><Separator><Title>.<Extension>. 
-                    I want them to be in the format \"<Show Name>.S<Season Number>E<Episode Number>.<Title>.<Extension>\". 
-                    Search through every Season of the Show Name on theTVDB.com using the Aired Order and based on the supplied title 
-                    to match by similar title to get a list, then from that list get the closest matching title and and use that episode number. 
-                    If no Season and Episode are found, leave blank instead.\r\n{fileNamesString}\r\n
-                    Return back only the list of updated filenames without any response text. 
-                    Do not include bullets or number prefixes.
-                    """;
-                }
-
-
-
-#pragma warning disable OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-                OpenAIResponse response = await openAIService.CreateResponseAsync(
-                    userInputText: prompt,
-                    new ResponseCreationOptions()
+                    // Use the Responses API with the web-search tool enabled for better matches
+                    var options = new ResponseCreationOptions()
                     {
-                        Tools = { ResponseTool.CreateWebSearchTool() },
-                    });
+                        Tools = { ResponseTool.CreateWebSearchTool() }
+                    };
 
-                foreach (ResponseItem item in response.OutputItems)
-                {
-if (item is MessageResponseItem message)
+                    OpenAIResponse response = await openAIService.CreateResponseAsync(prompt, options);
+
+                    if (response == null)
                     {
-                        Program.Logger.LogDebug($"[{message.Role}] {message.Content?.FirstOrDefault()?.Text}");
-                        Program.Logger.LogDebug($"AI Response: {response}");
+                        Program.Logger.LogError("OpenAI returned null response");
+                        continue;
+                    }
+
+                    var combined = new StringBuilder();
+
+                    foreach (ResponseItem item in response.OutputItems)
+                    {
+                        if (item is MessageResponseItem message)
+                        {
+                            var text = message.Content?.FirstOrDefault()?.Text;
+                            if (!string.IsNullOrEmpty(text))
+                            {
+                                combined.AppendLine(text);
+                                Program.Logger.LogDebug($"[{message.Role}] {text}");
+                            }
+                        }
+                    }
+
+                    var content = combined.ToString().Trim();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        Program.Logger.LogDebug($"AI Response: {content}");
+                        var fileNameList = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(line => line.Trim())
+                            .ToList();
+
+                        newFileNames.AddRange(fileNameList);
+                    }
+                    else
+                    {
+                        Program.Logger.LogError("Failed to get content from OpenAI response");
                     }
                 }
-#pragma warning restore OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-
-                //    if (!string.IsNullOrEmpty(response))
-                //    {
-                //        Program.Logger.LogDebug($"AI Response: {response}");
-                //        // Split the response into an array of lines
-                //        var fileNameList = response.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                //            .Select(line => line.Trim())
-                //            .ToList();
-
-                //        newFileNames.AddRange(fileNameList);
-                //    }
-                //    else
-                //    {
-                //        Program.Logger.LogError("Failed to get response from OpenAI");
-                //    }
+                catch (Exception ex)
+                {
+                    Program.Logger.LogError(ex, "Error while getting AI response");
+                }
             }
 
-            //// Rename files based on AI response
-            //RenameFiles(folderPath, allFiles, newFileNames);
+            // Rename files based on AI response
+            if (newFileNames.Any())
+            {
+                RenameFiles(folderPath, allFiles, newFileNames);
+            }
         }
 
         static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
