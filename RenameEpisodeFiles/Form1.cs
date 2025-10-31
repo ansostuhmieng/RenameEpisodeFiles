@@ -17,7 +17,7 @@ namespace RenameEpisodeFiles
         {
             InitializeComponent();
 
-            if(Program.OpenAIService != null)
+            if (Program.OpenAIService != null)
             {
                 ModeGroup.Visible = true;
             }
@@ -86,7 +86,7 @@ namespace RenameEpisodeFiles
 
                 // update the episode number so next path can be run easier
                 txtFirstEpisode.Text = (lastEpisode + 1).ToString();
-                txtFolderPath.Text = ""; 
+                txtFolderPath.Text = "";
             }
             else if (_renameMode == RenameMode.AI)
             {

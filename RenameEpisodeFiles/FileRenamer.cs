@@ -102,7 +102,7 @@ namespace RenameEpisodeFiles
             }
 
             // Rename files based on AI response
-            RenameFiles(folderPath, allFiles, newFileNames);            
+            RenameFiles(folderPath, allFiles, newFileNames);
         }
 
         static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
@@ -183,7 +183,7 @@ namespace RenameEpisodeFiles
 
         private static bool FileDoesNotExist(string currentFile, string newFilePath)
         {
-            return (!string.Equals(currentFile, newFilePath, StringComparison.OrdinalIgnoreCase)) && 
+            return (!string.Equals(currentFile, newFilePath, StringComparison.OrdinalIgnoreCase)) &&
                    !File.Exists(newFilePath);
         }
     }
