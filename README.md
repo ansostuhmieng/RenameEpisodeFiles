@@ -34,12 +34,12 @@ It is specifically designed for users of tools like Plex or Embi who are making 
 
 ## AI Mode
 
-AI Mode is a experimental mode, hidden by default, that uses the season and episode number in a filename to automatically retrieve episode titles from theTVDB.com.
+AI Mode is a experimental mode, hidden by default, that uses either the season and episode number ("By Episode") or the title ("By Title") in a filename to automatically retrieve episode numbers or titles from theTVDB.com.
 ![Screenshot of Rename Episodes app in AI mode](renep-ai.png)
 
 > To enable the AI mode toggle, you will need:
 >
-> 1. [an OpenAI API Key](https://platform.openai.com/docs/quickstart?desktop-os=windows)
+> 1. [a **paid** OpenAI API Key](https://platform.openai.com/docs/quickstart?desktop-os=windows)
 > 2. A `secrets.json` file in the root directory with the OpenAI API Key
 
 `secrets.json` example
@@ -52,13 +52,14 @@ AI Mode is a experimental mode, hidden by default, that uses the season and epis
 
 ### Options
 
-- Folder Path - folder where the files are now. Use the '?' button to select from a dialog.
+- Folder Path - folder where the files are now. Use the Directory/Folder button to select from a dialog.
 - Show Name - The show name goes that will be used in the filename.
 
 ### Caveats
 
 - Overwrites any existing filenames
-- The AI doesn't get the episode title 100% correct yet.
+- The AI doesn't get the episode title 100% correct yet (but has improved)
+- AI Modes are slower, but more accurate now
 
 ### Renaming
 
