@@ -1,24 +1,42 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenAI.Net;
 using OpenAI.Net.Models.Responses;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace RenameEpisodeFiles
 {
+    public record FileRenameRecord(string OriginalFileName, string NewFileName, string OriginalFullPath, string NewFullPath, DateTime RenameTime);
+
     internal class FileRenamer
     {
-        public static int RenameEpisodes(
-        string folderPath,
-        string showName,
-        int seasonNumber,
-        int startingEpisode,
-        string episodeNamesFile)
+        private static readonly string HistoryFolder = Path.Combine(
+            AppContext.BaseDirectory,
+            "History");
+
+        private static void SaveRenameHistory(List<FileRenameRecord> renameHistory)
         {
+            Directory.CreateDirectory(HistoryFolder);
+            var timestamp = DateTime.Now.ToString("yyyyMMddTHHmmss");
+            var historyFile = Path.Combine(HistoryFolder, $"rename_history_{timestamp}.json");
+            
+            var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+            var jsonString = JsonSerializer.Serialize(renameHistory, jsonOptions);
+            File.WriteAllText(historyFile, jsonString);
+            
+            Program.Logger.LogInformation($"Rename history saved to: {historyFile}");
+        }
+
+        public static int RenameEpisodes(
+            string folderPath,
+            string showName,
+            int seasonNumber,
+            int startingEpisode,
+            string episodeNamesFile)
+        {
+            var renameHistory = new List<FileRenameRecord>();
+            
             // Read episode names from file
             var episodeNames = File.ReadAllLines(episodeNamesFile)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
@@ -31,7 +49,6 @@ namespace RenameEpisodeFiles
                 .ToList();
 
             int episodeIndex = startingEpisode - 1;
-
             int lastEpisode = episodeIndex;
 
             for (int i = 0; i < files.Count && episodeIndex < episodeNames.Count; i++, episodeIndex++)
@@ -42,7 +59,13 @@ namespace RenameEpisodeFiles
                 string newFilePath = Path.Combine(folderPath, newFileName);
 
                 File.Move(file.FullName, newFilePath);
+                renameHistory.Add(new FileRenameRecord(file.Name, newFileName, file.FullName, newFilePath, DateTime.Now));
                 lastEpisode = episodeIndex + 1;
+            }
+
+            if (renameHistory.Any())
+            {
+                SaveRenameHistory(renameHistory);
             }
 
             return lastEpisode;
@@ -81,7 +104,7 @@ namespace RenameEpisodeFiles
                 {
                     options.Model = "gpt-4.1";
                     options.MaxTokens = 4000;
-                    options.Temperature = 0.7;
+                    options.Temperature = 0;
                 });
 
                 if (response.IsSuccess)
@@ -107,11 +130,14 @@ namespace RenameEpisodeFiles
 
         static void RenameFiles(string folderPath, List<FileInfo> files, List<string> newFileNames)
         {
+            var renameHistory = new List<FileRenameRecord>();
+
             for (int i = 0; i < files.Count && i < newFileNames.Count; i++)
             {
                 var file = files[i];
                 string newFileName = SanitizeFileName(newFileNames[i]);
                 string newFilePath = Path.Combine(folderPath, newFileName);
+                
                 // Check if the new file name is different before renaming
                 if (FileDoesNotExist(file.FullName, newFilePath))
                 {
@@ -119,6 +145,7 @@ namespace RenameEpisodeFiles
                     try
                     {
                         File.Move(file.FullName, newFilePath);
+                        renameHistory.Add(new FileRenameRecord(file.Name, newFileName, file.FullName, newFilePath, DateTime.Now));
                     }
                     catch (Exception ex)
                     {
@@ -131,6 +158,91 @@ namespace RenameEpisodeFiles
                 {
                     Program.Logger.LogInformation($"Skipped '{newFilePath}' as it already exists");
                 }
+            }
+
+            if (renameHistory.Any())
+            {
+                SaveRenameHistory(renameHistory);
+            }
+        }
+
+        public static bool UndoLastRename()
+        {
+            try
+            {
+                // Ensure history folder exists
+                if (!Directory.Exists(HistoryFolder))
+                {
+                    Program.Logger.LogInformation("No rename history found to undo");
+                    return false;
+                }
+
+                // Get the latest history file
+                var historyFiles = Directory.GetFiles(HistoryFolder, "rename_history_*.json")
+                    .OrderByDescending(f => f)
+                    .ToList();
+
+                if (!historyFiles.Any())
+                {
+                    Program.Logger.LogInformation("No rename history files found to undo");
+                    return false;
+                }
+
+                var latestHistoryFile = historyFiles.First();
+                var jsonString = File.ReadAllText(latestHistoryFile);
+                var renameHistory = JsonSerializer.Deserialize<List<FileRenameRecord>>(jsonString);
+
+                if (renameHistory == null || !renameHistory.Any())
+                {
+                    Program.Logger.LogInformation("Empty rename history in file");
+                    return false;
+                }
+
+                // Prepare reverse rename operations using full paths
+                var filesToRename = new List<FileInfo>();
+                var originalNames = new List<string>();
+                var originalPaths = new List<string>();
+
+                foreach (var record in renameHistory)
+                {
+                    if (File.Exists(record.NewFullPath))
+                    {
+                        filesToRename.Add(new FileInfo(record.NewFullPath));
+                        originalNames.Add(Path.GetFileName(record.OriginalFullPath));
+                        originalPaths.Add(record.OriginalFullPath);
+                    }
+                }
+
+                if (!filesToRename.Any())
+                {
+                    Program.Logger.LogInformation("No files found to undo rename");
+                    return false;
+                }
+
+                // Actually move files back to their original full paths
+                for (int i = 0; i < filesToRename.Count; i++)
+                {
+                    var file = filesToRename[i];
+                    var originalPath = originalPaths[i];
+                    try
+                    {
+                        File.Move(file.FullName, originalPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Program.Logger.LogError(ex, $"Error undoing rename for {file.FullName}");
+                    }
+                }
+
+                // Delete the history file after successful undo
+                File.Delete(latestHistoryFile);
+                Program.Logger.LogInformation($"Successfully undid renames from {latestHistoryFile}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Program.Logger.LogError(ex, "Error while trying to undo rename");
+                return false;
             }
         }
 

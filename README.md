@@ -1,6 +1,6 @@
 # Ansos' Episode File Renamer
 
-This tools renames batches of files for a specific TV show, based on data from [TheTVDB.com](https://www.thetvdb.com/), including the episode title. 
+This tools renames batches of files for a specific TV show, based on data from [TheTVDB.com](https://www.thetvdb.com/), including the episode title.
 
 It is specifically designed for users of tools like Plex or Embi who are making backups of TV shows from DVDs or Blu-Rays.
 
@@ -20,20 +20,20 @@ It is specifically designed for users of tools like Plex or Embi who are making 
 
 ### Caveats
 
-- Paths should not be wrapped in quotes
+- Paths should **not** be wrapped in quotes
 - It assumes the Folder Path **ONLY** has episodes in it, so be aware of that
   - It orders the files by creation timestamp and does its thing
-- No real safety nets
-  - Renames cannot be automatically undone
-  - Overwrites any existing filenames
+- Overwrites any existing filenames
   
 ### Renaming
 
 - Click the 'Rename Files' button to fire it off
   - Files will be renamed in the format `<Show Name>.S<Season Number>E<Episode Number>.<Episode Title [from Episode Data]>.<Original File Extension>`
   - for example: `Star Trek - Deep Space Nine.S03E11.Past Tense, Part I.mkv`
+- The 'Undo Rename' button will revert the renames if a mistake was made. It will appear once you have renamed files.![Screenshot of Rename Episodes app with Undo Rename shown](renep-default-undo.png)
 
 ## AI Mode
+
 AI Mode is a experimental mode, hidden by default, that uses the season and episode number in a filename to automatically retrieve episode titles from theTVDB.com.
 ![Screenshot of Rename Episodes app in AI mode](renep-ai.png)
 
@@ -55,15 +55,14 @@ AI Mode is a experimental mode, hidden by default, that uses the season and epis
 - Folder Path - folder where the files are now. Use the '?' button to select from a dialog.
 - Show Name - The show name goes that will be used in the filename.
 
+### Caveats
+
+- Overwrites any existing filenames
+- The AI doesn't get the episode title 100% correct yet.
+
 ### Renaming
 
 - Click the 'Rename with AI' button to fire it off
   - Files will be renamed in the format `<Show Name>.S<Season Number>E<Episode Number>.<Episode Title [from Episode Data]>.<Original File Extension>`
   - for example: `Star Trek - Deep Space Nine.S03E11.Past Tense, Part I.mkv`
-
-### Caveats
-
-- No real safety nets
-  - Renames cannot be automatically undone
-  - Overwrites any existing filenames
-  - The AI doesn't get the episode title 100% correct yet.
+- The 'Undo Rename' button will revert the renames if a mistake was made. It will appear once you have renamed files.![Screenshot of Rename Episodes app with Undo Rename shown](renep-ai-undo.png)
