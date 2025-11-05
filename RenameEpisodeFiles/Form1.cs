@@ -29,7 +29,6 @@ namespace RenameEpisodeFiles
 
         private async void btnRename_ClickAsync(object sender, EventArgs e)
         {
-
             if (_renameMode == RenameMode.Default)
             {
                 #region basic validation
@@ -114,8 +113,11 @@ namespace RenameEpisodeFiles
                 btnRename.Enabled = false; // Disable button to prevent multiple clicks
                 progressRename.Visible = true; // Show progress bar
                 
-                // Call the AI renaming method
-                await FileRenamer.RenameEpisodesWithAI(folderPath, showName);
+                // Determine AI option: true = by episode number, false = by title
+                bool byEpisodeNumber = btnAiByEp.Checked;
+
+                // Call the AI renaming method with the selected AI option
+                await FileRenamer.RenameEpisodesWithAI(folderPath, showName, byEpisodeNumber);
                 
                 progressRename.Visible = false; // Hide progress bar after operation
                 btnRename.Enabled = true; // Re-enable button after operation
@@ -266,31 +268,53 @@ namespace RenameEpisodeFiles
             }
         }
 
-        private void radioModeAI_CheckedChanged(object sender, EventArgs e)
+        // UI Mode Switch Methods
+        private void UpdateControlsVisibility()
         {
-            if (radioModeAI.Checked)
+            // These controls are only visible in Default mode
+            var defaultOnlyControls = new Control[]
             {
-                _renameMode = RenameMode.AI;
-                btnRename.Text = "Rename with AI";
+                txtSeasonNumber,
+                label3,             // Season Number label
+                txtFirstEpisode,
+                label2,       // Starting Episode Number label
+                txtCopyFilesTo,
+                label6,               // Copy Files To label
+                txtEpisodeData,
+                btnFindEpisodeData,      // Episode Data browse button
+                btnCleanEpisodeData,
+                label4,  // Episode Data label
+                lblErr
+            };
+
+            foreach (var control in defaultOnlyControls)
+            {
+                control.Visible = _renameMode == RenameMode.Default;
             }
-            else
-            {
-                _renameMode = RenameMode.Default;
-                btnRename.Text = "Rename Files";
+
+            // Update button text and AI options group visibility
+            btnRename.Text = _renameMode == RenameMode.Default ? "Rename Files" : "Rename with AI";
+            grpAiModeOptions.Visible = _renameMode == RenameMode.AI;
+
+            // Update copy button visibility based on mode and text
+            button1.Visible = _renameMode == RenameMode.Default;
+        }
+
+        private void radioModeAI_CheckedChanged(object sender, EventArgs e)
+   {
+            if (radioModeAI.Checked)
+    {
+ _renameMode = RenameMode.AI;
+       UpdateControlsVisibility();
             }
         }
 
         private void radioModeDefault_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioModeDefault.Checked)
+     if (radioModeDefault.Checked)
             {
-                _renameMode = RenameMode.Default;
-                btnRename.Text = "Rename Files";
-            }
-            else
-            {
-                _renameMode = RenameMode.AI;
-                btnRename.Text = "Rename with AI";
+   _renameMode = RenameMode.Default;
+              UpdateControlsVisibility();
             }
         }
     }

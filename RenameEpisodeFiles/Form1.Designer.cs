@@ -54,7 +54,11 @@
             radioModeDefault = new RadioButton();
             progressRename = new ProgressBar();
             btnUndo = new Button();
+            grpAiModeOptions = new GroupBox();
+            btnAiByTitle = new RadioButton();
+            btnAiByEp = new RadioButton();
             ModeGroup.SuspendLayout();
+            grpAiModeOptions.SuspendLayout();
             SuspendLayout();
             // 
             // folderBrowserDialog1
@@ -234,9 +238,9 @@
             // 
             ModeGroup.Controls.Add(radioModeAI);
             ModeGroup.Controls.Add(radioModeDefault);
-            ModeGroup.Location = new Point(477, 89);
+            ModeGroup.Location = new Point(300, 87);
             ModeGroup.Name = "ModeGroup";
-            ModeGroup.Size = new Size(270, 78);
+            ModeGroup.Size = new Size(259, 78);
             ModeGroup.TabIndex = 17;
             ModeGroup.TabStop = false;
             ModeGroup.Visible = false;
@@ -286,12 +290,46 @@
             btnUndo.Visible = false;
             btnUndo.Click += btnUndo_Click;
             // 
+            // grpAiModeOptions
+            // 
+            grpAiModeOptions.Controls.Add(btnAiByTitle);
+            grpAiModeOptions.Controls.Add(btnAiByEp);
+            grpAiModeOptions.Location = new Point(567, 87);
+            grpAiModeOptions.Name = "grpAiModeOptions";
+            grpAiModeOptions.Size = new Size(222, 78);
+            grpAiModeOptions.TabIndex = 18;
+            grpAiModeOptions.TabStop = false;
+            grpAiModeOptions.Visible = false;
+            // 
+            // btnAiByTitle
+            // 
+            btnAiByTitle.AutoSize = true;
+            btnAiByTitle.Location = new Point(129, 30);
+            btnAiByTitle.Name = "btnAiByTitle";
+            btnAiByTitle.Size = new Size(93, 29);
+            btnAiByTitle.TabIndex = 1;
+            btnAiByTitle.Text = "By Title";
+            btnAiByTitle.UseVisualStyleBackColor = true;
+            // 
+            // btnAiByEp
+            // 
+            btnAiByEp.AutoSize = true;
+            btnAiByEp.Checked = true;
+            btnAiByEp.Location = new Point(8, 30);
+            btnAiByEp.Name = "btnAiByEp";
+            btnAiByEp.Size = new Size(124, 29);
+            btnAiByEp.TabIndex = 0;
+            btnAiByEp.TabStop = true;
+            btnAiByEp.Text = "By Episode";
+            btnAiByEp.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(grpAiModeOptions);
             Controls.Add(btnUndo);
             Controls.Add(progressRename);
             Controls.Add(ModeGroup);
@@ -318,6 +356,8 @@
             Text = "Rename Episodes";
             ModeGroup.ResumeLayout(false);
             ModeGroup.PerformLayout();
+            grpAiModeOptions.ResumeLayout(false);
+            grpAiModeOptions.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -349,5 +389,8 @@
         private RadioButton radioModeAI;
         private ProgressBar progressRename;
         private Button btnUndo;
+        private GroupBox grpAiModeOptions;
+        private RadioButton btnAiByTitle;
+        private RadioButton btnAiByEp;
     }
 }
