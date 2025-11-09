@@ -62,7 +62,8 @@ jobs:
         run: dotnet publish RenameEpisodeFiles/RenameEpisodeFiles.csproj -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -o publish
 
       - name: Create Release
-        if: github.ref == 'refs/heads/master' && steps.check_release.outputs.EXISTS != 'True' # Only create release when merging to master and if it doesn't exist
+  
+        if: github.ref == 'refs/heads/master' && steps.gh-release-check.outputs.release_exists == 'false' # Only create release when merging to master and if it doesn't exist
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             VERSION: ${{ steps.get_version.outputs.VERSION }}
