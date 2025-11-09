@@ -35,16 +35,21 @@ jobs:
                 exit 1
             }
 
-      - name: Check if release exists
-        id: check_release
-        shell: pwsh
-        env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            VERSION: ${{ steps.get_version.outputs.VERSION }}
+      - name: Check Release with GitHub CLI
+        id: gh-release-check
         run: |
-          $release = gh release view "v$env:VERSION" 2>&1
-          $exists = $LASTEXITCODE -eq 0
-          echo "EXISTS=$exists" >> $env:GITHUB_OUTPUT
+          TAG_NAME="v${VERSION}"
+          if gh release view "${TAG_NAME}" &>/dev/null; then
+            echo "Release ${TAG_NAME} exists"
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release ${TAG_NAME} does not exist"
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
 
       - name: Restore dependencies
         run: dotnet restore
