@@ -1,0 +1,71 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4 
+  
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install GitHub CLI
+        run: choco install gh
+
+      - name: Get Version
+        id: get_version
+        shell: pwsh
+        run: |
+            if (Test-Path ".\RenameEpisodeFiles\RenameEpisodeFiles.csproj") {
+                $xml = [Xml] (Get-Content ".\RenameEpisodeFiles\RenameEpisodeFiles.csproj")
+                $version = $xml.Project.PropertyGroup.Version
+                echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+            } else {
+                Write-Error "Missing .csproj file!"
+                exit 1
+            }
+
+      - name: Check if release exists
+        id: check_release
+        shell: pwsh
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          $release = gh release view "v$env:VERSION" 2>&1
+          $exists = $LASTEXITCODE -eq 0
+          echo "EXISTS=$exists" >> $env:GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+ 
+      - name: Publish
+        run: dotnet publish RenameEpisodeFiles/RenameEpisodeFiles.csproj -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -o publish
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/master' && steps.check_release.outputs.EXISTS != 'True' # Only create release when merging to master and if it doesn't exist
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            VERSION: ${{ steps.get_version.outputs.VERSION }}
+        shell: pwsh
+        run: |
+          gh release create "v$env:VERSION" `
+            --title "Release v$env:VERSION" `
+            --notes "Release version $env:VERSION" `
+            "./publish/RenameEpisodeFiles.exe"
